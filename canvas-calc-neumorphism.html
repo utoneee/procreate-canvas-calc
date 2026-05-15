@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Procreate 畫布換算</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --radius-sm: 12px;
+    --radius-md: 20px;
+    --radius-lg: 32px;
+    --radius-pill: 999px;
+    --font-body: 'PingFang TC', 'Noto Sans TC', system-ui, sans-serif;
+    --font-mono: 'DM Mono', ui-monospace, monospace;
+  }
+
+  [data-theme="light"] {
+    --color-bg: #e6e7ee;
+    --color-shadow-dark: #b5b9c5;
+    --color-shadow-light: #f4f4f9;
+    --color-fg: #2d3142;
+    --color-fg-soft: #4f5470;
+    --color-fg-mute: #6b7280;
+    --color-accent: #d97706;
+    --color-ok: #15803d;
+    --color-warn: #c2410c;
+    --color-danger: #b91c1c;
+    --shadow-out: 2px 2px 5px var(--color-shadow-dark), -2px -2px 5px var(--color-shadow-light);
+    --shadow-out-lg: 4px 4px 8px var(--color-shadow-dark), -4px -4px 8px var(--color-shadow-light);
+    --shadow-in: inset 2px 2px 4px var(--color-shadow-dark), inset -2px -2px 4px var(--color-shadow-light);
+    --shadow-in-sm: inset 1px 1px 3px var(--color-shadow-dark), inset -1px -1px 3px var(--color-shadow-light);
+  }
+
+  [data-theme="dark"] {
+    --color-bg: #1a2020;
+    --color-surface: #222c2c;
+    --color-surface2: #2a3838;
+    --color-border: #3a5252;
+    --color-fg: #d4e4e4;
+    --color-fg-soft: #94B4B4;
+    --color-fg-mute: #6a8e8e;
+    --color-accent: #719191;
+    --color-accent-hover: #94B4B4;
+    --color-accent-dark: #3A5A5A;
+    --color-ok: #94B4B4;
+    --color-warn: #c8922a;
+    --color-danger: #cc5555;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--color-bg);
+    color: var(--color-fg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 20px 80px;
+    transition: background 0.6s ease, color 0.6s ease;
+  }
+
+  /* HEADER */
+  .header {
+    width: 100%;
+    max-width: 560px;
+    margin-bottom: 40px;
+  }
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .header-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--color-fg-mute);
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  [data-theme="light"] h1 { color: var(--color-fg); }
+  [data-theme="light"] h1 strong { font-weight: 700; color: var(--color-accent); }
+  [data-theme="dark"] h1 { color: #689E9E; }
+  [data-theme="dark"] h1 strong { font-weight: 500; }
+
+  /* THEME TOGGLE */
+  .theme-toggle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  [data-theme="light"] .theme-toggle {
+    border: none;
+    background: var(--color-bg);
+    box-shadow: var(--shadow-out);
+    color: var(--color-fg-mute);
+  }
+  [data-theme="light"] .theme-toggle:active { box-shadow: var(--shadow-in); }
+
+  [data-theme="dark"] .theme-toggle {
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-fg-mute);
+  }
+
+  /* CARD */
+  .card {
+    width: 100%;
+    max-width: 560px;
+    margin-bottom: 24px;
+    padding: 28px;
+    transition: background 0.6s ease, box-shadow 0.6s ease, border-color 0.6s ease;
+  }
+
+  [data-theme="light"] .card {
+    background: var(--color-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-out);
+    border: none;
+  }
+
+  [data-theme="dark"] .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    box-shadow: none;
+  }
+
+  .card-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-fg-mute);
+    margin-bottom: 20px;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--color-fg-mute);
+    margin-bottom: 8px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
+  /* INPUTS */
+  select, input[type="number"] {
+    width: 100%;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    color: var(--color-fg);
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 0 14px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: all 0.25s ease;
+  }
+
+  [data-theme="light"] select,
+  [data-theme="light"] input[type="number"] {
+    border: none;
+    background: var(--color-bg);
+    box-shadow: var(--shadow-in);
+  }
+
+  [data-theme="dark"] select,
+  [data-theme="dark"] input[type="number"] {
+    border: 1px solid var(--color-border);
+    background: var(--color-surface2);
+    box-shadow: none;
+  }
+
+  [data-theme="dark"] select:focus,
+  [data-theme="dark"] input[type="number"]:focus { border-color: var(--color-accent); }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236a8e8e' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+
+  [data-theme="light"] select { background-color: var(--color-bg); }
+  [data-theme="dark"] select { background-color: var(--color-surface2); }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  /* SCALE */
+  .scale-section { margin-top: 4px; }
+
+  .scale-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+
+  .scale-header label {
+    font-size: 12px;
+    color: var(--color-fg-mute);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
+  .scale-value {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-fg);
+    letter-spacing: -0.02em;
+  }
+
+  .slider-track {
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    transition: all 0.25s ease;
+  }
+
+  [data-theme="light"] .slider-track {
+    background: var(--color-bg);
+    box-shadow: var(--shadow-in-sm);
+    border: none;
+  }
+
+  [data-theme="dark"] .slider-track {
+    background: var(--color-surface2);
+    border: 1px solid var(--color-border);
+    box-shadow: none;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  [data-theme="light"] input[type="range"] { background: var(--color-shadow-dark); }
+  [data-theme="dark"] input[type="range"] { background: var(--color-border); }
+
+  [data-theme="light"] input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #a0a7b8;
+    box-shadow: var(--shadow-out);
+    cursor: pointer;
+    transition: box-shadow 0.15s ease;
+  }
+  [data-theme="light"] input[type="range"]::-webkit-slider-thumb:hover { box-shadow: var(--shadow-out-lg); }
+  [data-theme="light"] input[type="range"]::-webkit-slider-thumb:active { box-shadow: var(--shadow-in-sm); }
+
+  [data-theme="dark"] input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    border: 3px solid var(--color-surface);
+    box-shadow: 0 0 0 1px var(--color-accent);
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  [data-theme="dark"] input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+  .scale-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-fg-mute);
+  }
+
+  /* DIVIDER */
+  .divider { height: 1px; margin: 24px 0; }
+  [data-theme="light"] .divider { background: var(--color-shadow-dark); opacity: 0.4; }
+  [data-theme="dark"] .divider { background: var(--color-border); opacity: 1; }
+
+  /* RESULT GRID */
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .metric {
+    padding: 16px 12px;
+    text-align: center;
+    transition: all 0.25s ease;
+  }
+
+  [data-theme="light"] .metric {
+    background: var(--color-bg);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-in);
+  }
+
+  [data-theme="dark"] .metric {
+    background: var(--color-surface2);
+    border-radius: 10px;
+  }
+
+  .metric-label {
+    font-size: 10px;
+    color: var(--color-fg-mute);
+    margin-bottom: 8px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .metric-value {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-fg);
+    line-height: 1.4;
+  }
+
+  /* TIPS */
+  .tip {
+    padding: 14px 18px;
+    font-size: 13px;
+    line-height: 1.7;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+  }
+
+  [data-theme="light"] .tip { box-shadow: var(--shadow-in); border: none; }
+  [data-theme="light"] .tip.ok     { color: var(--color-ok); }
+  [data-theme="light"] .tip.warn   { color: var(--color-warn); }
+  [data-theme="light"] .tip.danger { color: var(--color-danger); }
+
+  [data-theme="dark"] .tip.ok     { background: #1e3535; color: #94B4B4; border-color: #2e5858; }
+  [data-theme="dark"] .tip.warn   { background: #2a1f06; color: #c8922a; border-color: #4a2a08; }
+  [data-theme="dark"] .tip.danger { background: #2d1010; color: #cc5555; border-color: #4a1818; }
+
+  /* PS STEPS */
+  .ps-section-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-fg-mute);
+    margin-bottom: 12px;
+  }
+
+  .ps-steps { display: flex; flex-direction: column; gap: 8px; }
+
+  .ps-step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--color-fg-soft);
+    padding: 4px 0;
+  }
+
+  .step-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-accent);
+    font-weight: 700;
+    min-width: 20px;
+    padding-top: 2px;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 32px 0;
+    color: var(--color-fg-mute);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .empty-state .icon { font-size: 28px; margin-bottom: 10px; opacity: 0.35; }
+
+  /* PRESETS */
+  .presets {
+    width: 100%;
+    max-width: 560px;
+    margin-bottom: 24px;
+  }
+
+  .presets-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-fg-mute);
+    margin-bottom: 12px;
+    padding: 0 4px;
+  }
+
+  .preset-list { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  .preset-btn {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 10px 20px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    white-space: nowrap;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  [data-theme="light"] .preset-btn {
+    border: none;
+    background: var(--color-bg);
+    color: var(--color-fg-soft);
+    box-shadow: var(--shadow-out);
+  }
+  [data-theme="light"] .preset-btn:hover { box-shadow: var(--shadow-out-lg); }
+  [data-theme="light"] .preset-btn:active,
+  [data-theme="light"] .preset-btn.selected {
+    box-shadow: var(--shadow-in);
+    color: var(--color-accent);
+    background: var(--color-bg);
+  }
+
+  [data-theme="dark"] .preset-btn {
+    background: transparent;
+    border: 1px solid var(--color-accent);
+    color: var(--color-accent);
+    box-shadow: none;
+  }
+  [data-theme="dark"] .preset-btn:hover {
+    border-color: var(--color-accent-hover);
+    color: var(--color-bg);
+    background: var(--color-accent-hover);
+  }
+  [data-theme="dark"] .preset-btn.selected {
+    border-color: var(--color-accent-dark);
+    color: #ffffff;
+    background: var(--color-accent-dark);
+  }
+
+  footer {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-fg-mute);
+    text-align: center;
+    margin-top: 8px;
+    letter-spacing: 0.05em;
+  }
+
+  @media (max-width: 480px) {
+    .row { grid-template-columns: 1fr; }
+    .result-grid { grid-template-columns: 1fr 1fr; }
+    .result-grid .metric:last-child { grid-column: span 2; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="header-tag">procreate canvas calc</div>
+    <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()" title="切換深淺色">☾</button>
+  </div>
+  <h1>Procreate <strong>畫布換算</strong></h1>
+</div>
+
+<div class="presets">
+  <div class="presets-title">常用預設</div>
+  <div class="preset-list">
+    <button class="preset-btn" onclick="loadPreset('A4','print','cm',21,29.7,this)">A4 印刷</button>
+    <button class="preset-btn" onclick="loadPreset('A5','print','cm',14.8,21,this)">A5 印刷</button>
+    <button class="preset-btn" onclick="loadPreset('iPhone','screen','px',390,844,this)">iPhone 螢幕</button>
+    <button class="preset-btn" onclick="loadPreset('名片','print','cm',9,5.4,this)">名片</button>
+    <button class="preset-btn" onclick="loadPreset('貼紙','print','cm',6,6,this)">方形貼紙</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">目標尺寸</div>
+
+  <div class="row">
+    <div class="field">
+      <label>用途</label>
+      <select id="mode">
+        <option value="print">印刷（cm）</option>
+        <option value="screen">螢幕（px）</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>解析度</label>
+      <select id="dpi">
+        <option value="300">300 DPI</option>
+        <option value="200">200 DPI</option>
+        <option value="150">150 DPI</option>
+        <option value="72">72 DPI</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="field">
+      <label>寬度</label>
+      <input type="number" id="w" placeholder="例：13" min="0" step="any">
+    </div>
+    <div class="field">
+      <label>高度</label>
+      <input type="number" id="h" placeholder="例：10" min="0" step="any">
+    </div>
+  </div>
+
+  <div class="scale-section">
+    <div class="scale-header">
+      <label>作圖倍數</label>
+      <span class="scale-value" id="scale-out">1.5×</span>
+    </div>
+    <div class="slider-track">
+      <input type="range" id="scale" min="1" max="4" step="0.5" value="1.5">
+    </div>
+    <div class="scale-ticks">
+      <span>1×</span><span>1.5×</span><span>2×</span><span>2.5×</span><span>3×</span><span>3.5×</span><span>4×</span>
+    </div>
+  </div>
+</div>
+
+<div class="card" id="result-card">
+  <div id="empty-state" class="empty-state">
+    <div class="icon">↑</div>
+    輸入目標尺寸<br>自動計算 Procreate 畫布
+  </div>
+
+  <div id="result-content" style="display:none;">
+    <div class="card-title">Procreate 設定</div>
+
+    <div class="result-grid">
+      <div class="metric">
+        <div class="metric-label">畫布尺寸</div>
+        <div class="metric-value" id="res-px">—</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">最大圖層</div>
+        <div class="metric-value" id="res-layer">—</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">PS 解析度</div>
+        <div class="metric-value" id="res-dpi">—</div>
+      </div>
+    </div>
+
+    <div class="tip" id="tip-box"></div>
+
+    <div class="divider"></div>
+
+    <div class="ps-section-title">匯入 Photoshop</div>
+    <div class="ps-steps" id="ps-steps"></div>
+  </div>
+</div>
+
+<footer>iPad mini 7 · Procreate 5X · 僅供參考</footer>
+
+<script>
+const MINI7_MAX = 3088;
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  document.getElementById('themeBtn').textContent = next === 'dark' ? '☼' : '☾';
+  localStorage.setItem('cc-theme', next);
+}
+
+(function () {
+  const saved = localStorage.getItem('cc-theme');
+  if (saved === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('themeBtn').textContent = '☼';
+  }
+})();
+
+function calcLayers(w, h) {
+  const mp = (w * h) / 1000000;
+  if (mp <= 1) return "不限";
+  if (mp <= 2) return "~124";
+  if (mp <= 4) return "~55";
+  if (mp <= 8) return "~31";
+  if (mp <= 12) return "~20";
+  if (mp <= 18) return "~14";
+  if (mp <= 25) return "~8";
+  return "~4 以下";
+}
+
+function layerNum(w, h) {
+  const mp = (w * h) / 1000000;
+  if (mp <= 1) return 999;
+  if (mp <= 2) return 124;
+  if (mp <= 4) return 55;
+  if (mp <= 8) return 31;
+  if (mp <= 12) return 20;
+  if (mp <= 18) return 14;
+  if (mp <= 25) return 8;
+  return 4;
+}
+
+function update() {
+  const mode = document.getElementById('mode').value;
+  const unit = mode === 'print' ? 'cm' : 'px';
+  const wVal = parseFloat(document.getElementById('w').value);
+  const hVal = parseFloat(document.getElementById('h').value);
+  const scale = parseFloat(document.getElementById('scale').value);
+
+  document.getElementById('scale-out').textContent = scale + '×';
+
+  if (!wVal || !hVal || wVal <= 0 || hVal <= 0) {
+    document.getElementById('empty-state').style.display = 'block';
+    document.getElementById('result-content').style.display = 'none';
+    return;
+  }
+
+  let basePxW, basePxH;
+  const dpi = parseInt(document.getElementById('dpi').value);
+
+  if (mode === 'print') {
+    if (unit === 'cm') {
+      basePxW = Math.round(wVal / 2.54 * dpi);
+      basePxH = Math.round(hVal / 2.54 * dpi);
+    } else {
+      basePxW = Math.round(wVal);
+      basePxH = Math.round(hVal);
+    }
+  } else {
+    basePxW = Math.round(wVal);
+    basePxH = Math.round(hVal);
+  }
+
+  const targetW = Math.round(basePxW * scale);
+  const targetH = Math.round(basePxH * scale);
+  const maxDim = Math.max(targetW, targetH);
+  const layers = calcLayers(targetW, targetH);
+  const ln = layerNum(targetW, targetH);
+  const dpiLabel = dpi + ' DPI';
+
+  if (mode === 'screen') {
+    const cmW = (basePxW / dpi * 2.54).toFixed(1);
+    const cmH = (basePxH / dpi * 2.54).toFixed(1);
+    document.getElementById('res-px').innerHTML =
+      targetW + ' × ' + targetH + ' px<br>' +
+      '<span style="font-size:11px;color:var(--color-fg-mute)">' + cmW + ' × ' + cmH + ' cm</span>';
+  } else {
+    document.getElementById('res-px').textContent = targetW + ' × ' + targetH + ' px';
+  }
+  document.getElementById('res-layer').textContent = layers;
+  document.getElementById('res-dpi').textContent = dpiLabel;
+
+  const tipBox = document.getElementById('tip-box');
+  if (maxDim > MINI7_MAX) {
+    tipBox.className = 'tip danger';
+    tipBox.textContent = '超過 iPad mini 7 上限（' + MINI7_MAX + 'px），請降低倍數。';
+  } else if (ln < 12) {
+    tipBox.className = 'tip warn';
+    tipBox.textContent = '圖層數偏少（' + layers + '），複雜作品可能不夠用。建議降低倍數。';
+  } else if (scale <= 1) {
+    tipBox.className = 'tip warn';
+    tipBox.textContent = '原始尺寸作圖筆觸較粗，建議至少 1.5× 以上。';
+  } else {
+    tipBox.className = 'tip ok';
+    tipBox.textContent = '✓ 尺寸合理，圖層充足，可以放心開始。';
+  }
+
+  const psSteps = document.getElementById('ps-steps');
+  let steps = [];
+  if (mode === 'print') {
+    steps = [
+      '從 Procreate 匯出 PNG（最高品質）',
+      '開啟 Photoshop → 影像 → 影像尺寸',
+      '取消勾選「重新取樣」',
+      '解析度設為 ' + dpi + ' → 確認（尺寸自動換算成 cm）',
+      '轉換色彩模式：影像 → 模式 → CMYK（印刷用）',
+      '另存 PDF 或 TIFF 送印'
+    ];
+  } else {
+    steps = [
+      '從 Procreate 匯出 PNG',
+      '開啟 Photoshop → 影像 → 影像尺寸',
+      '勾選「重新取樣」→ 縮小至 ' + basePxW + ' × ' + basePxH + ' px',
+      '解析度維持 ' + dpi + '，色彩模式保持 sRGB',
+      '匯出為 PNG 或 WebP'
+    ];
+  }
+
+  psSteps.innerHTML = steps.map((s, i) =>
+    `<div class="ps-step"><span class="step-num">${String(i+1).padStart(2,'0')}</span><span>${s}</span></div>`
+  ).join('');
+
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('result-content').style.display = 'block';
+}
+
+function loadPreset(name, mode, unit, w, h, btn) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+  if (btn) btn.classList.add('selected');
+  document.getElementById('mode').value = mode;
+  document.getElementById('w').value = w;
+  document.getElementById('h').value = h;
+  update();
+}
+
+['mode','w','h','scale','dpi'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+    update();
+  });
+});
+</script>
+</body>
+</html>
