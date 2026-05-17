@@ -24,8 +24,28 @@
     --warn-light: #2a1f06;
     --danger: #cc5555;
     --danger-light: #2d1010;
+    --tip-ok-border: #2e5858;
+    --tip-warn-border: #4a2a08;
+    --tip-danger-border: #4a1818;
     --mono: 'DM Mono', monospace;
     --sans: 'DM Sans', sans-serif;
+  }
+
+  [data-theme="light"] {
+    --bg: #f5f3ee;
+    --surface: #ffffff;
+    --surface2: #f0ede6;
+    --border: #ddd9d0;
+    --text: #1a1816;
+    --text-muted: #7a746a;
+    --accent-light: #e6efef;
+    --warn: #7a4f1a;
+    --warn-light: #fdf0e0;
+    --danger: #8b2020;
+    --danger-light: #fdeaea;
+    --tip-ok-border: #b0cbcb;
+    --tip-warn-border: #f0d4a8;
+    --tip-danger-border: #f0c0c0;
   }
 
   body {
@@ -244,19 +264,41 @@
   .tip.ok {
     background: var(--accent-light);
     color: var(--accent-hover);
-    border-color: #2e5858;
+    border-color: var(--tip-ok-border);
   }
 
   .tip.warn {
     background: var(--warn-light);
     color: var(--warn);
-    border-color: #4a2a08;
+    border-color: var(--tip-warn-border);
   }
 
   .tip.danger {
     background: var(--danger-light);
     color: var(--danger);
-    border-color: #4a1818;
+    border-color: var(--tip-danger-border);
+  }
+
+  #theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 20px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+    z-index: 100;
+  }
+
+  #theme-toggle:hover {
+    border-color: var(--accent);
+    color: var(--text);
   }
 
   .ps-section-title {
@@ -364,6 +406,8 @@
 </style>
 </head>
 <body>
+
+<button id="theme-toggle" onclick="toggleTheme()">light</button>
 
 <div class="header">
   <div class="header-tag">procreate canvas calc</div>
@@ -590,6 +634,20 @@ function loadPreset(name, mode, unit, w, h, btn) {
   document.getElementById('h').value = h;
   update();
 }
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const isLight = html.getAttribute('data-theme') === 'light';
+  html.setAttribute('data-theme', isLight ? 'dark' : 'light');
+  document.getElementById('theme-toggle').textContent = isLight ? 'light' : 'dark';
+  localStorage.setItem('theme', isLight ? 'dark' : 'light');
+}
+
+(function() {
+  const saved = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  document.getElementById('theme-toggle').textContent = saved === 'light' ? 'dark' : 'light';
+})();
 
 ['mode','w','h','scale','dpi'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => {
